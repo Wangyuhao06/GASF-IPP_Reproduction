@@ -17,11 +17,11 @@ from ryu.lib.packet import tcp
 from ryu.lib.packet import udp
 from ryu.lib import hub
 from datetime import datetime
+import pandas as pd
 import time
 import copy
 import os
 import shutil
-from SlidingWindow import SlidingWindow
 
 
 class Controller(app_manager.RyuApp):
@@ -38,15 +38,17 @@ class Controller(app_manager.RyuApp):
         self.datapaths = {}
         self.index = 0
         self.path = "./history"
-        self.window = SlidingWindow(maxsize=30)
+        self.window_size = 5
+        self.window_index = 0
 
         folder = os.path.exists(self.path)
         if not folder:                
             os.makedirs(self.path)
+
         if os.path.exists("./collection_tcp.csv"):
             shutil.move("collection_tcp.csv", 
                         os.path.join(self.path, "collection_tcp" + str(time.time()) + ".csv"))
-        if os.path.exists("./collection_tcp.csv"):
+        if os.path.exists("./collection_udp.csv"):
             shutil.move("collection_udp.csv",
                         os.path.join(self.path, "collection_udp" + str(time.time()) + ".csv"))
         if os.path.exists("./collection_agg.csv"):  
@@ -54,16 +56,39 @@ class Controller(app_manager.RyuApp):
                         os.path.join(self.path, "collection_agg" + str(time.time()) + ".csv"))
 
         file0 = open("collection_tcp.csv", "w")
-        file0.write("index, type, packet, bytes\n")
+        file0.write("index, type, packets, bytes\n")
         file0.close()
 
         file0 = open("collection_udp.csv", "w")
-        file0.write("index, type, packet, bytes\n")
+        file0.write("index, type, packets, bytes\n")
         file0.close()
 
         file0 = open("collection_agg.csv", "w")
-        file0.write("index, type, packet, bytes\n")
+        file0.write("index, type, packets, bytes\n")
         file0.close()
+
+        if os.path.exists("./overlapped_tcp_window.csv"):
+            shutil.move("overlapped_tcp_window.csv",
+                        os.path.join(self.path, "overlapped_tcp_window" + str(time.time()) + ".csv"))
+        if os.path.exists("./overlapped_udp_window.csv"):
+            shutil.move("overlapped_udp_window.csv",
+                        os.path.join(self.path, "overlapped_udp_window" + str(time.time()) + ".csv"))
+        if os.path.exists("./overlapped_agg_window.csv"):
+            shutil.move("overlapped_agg_window.csv",
+                        os.path.join(self.path, "overlapped_agg_window" + str(time.time()) + ".csv"))
+
+        file = open("overlapped_tcp_window.csv", "w")
+        file.write("index, type, packets, bytes\n")
+        file.close()
+
+        file = open("overlapped_udp_window.csv", "w")
+        file.write("index, type, packets, bytes\n")
+        file.close()
+
+        file = open("overlapped_agg_window.csv", "w")
+        file.write("index, type, packets, bytes\n")
+        file.close()
+
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
     def switch_features_handler(self, ev):
@@ -239,3 +264,35 @@ class Controller(app_manager.RyuApp):
 
         self.pre_bytes_data = copy.deepcopy(temp_bytes_data)
         self.pre_packet_data = copy.deepcopy(temp_packet_data)
+
+        # Overlap Sliding Window
+        df_tcp = pd.read_csv("collection_tcp.csv")
+        df_udp = pd.read_csv("collection_udp.csv")
+        df_agg = pd.read_csv("collection_agg.csv")
+
+        if len(df_tcp) >= self.window_size:
+            self.window_index += 1
+            tcp_window = df_tcp.tail(self.window_size)  # 取出窗口里的值
+            udp_window = df_udp.tail(self.window_size)
+            agg_window = df_agg.tail(self.window_size)
+            tmp_packets = [0, 0, 0]
+            tmp_bytes = [0, 0, 0]
+            for i in range(self.window_size):
+                tmp_packets[0] += tcp_window.iloc[i]['packets']
+                tmp_bytes[0] += tcp_window.iloc[i]['bytes']
+                tmp_packets[1] += udp_window.iloc[i]['packets']
+                tmp_bytes[1] += udp_window.iloc[i]['bytes']
+                tmp_packets[2] += agg_window.iloc[i]['packets']
+                tmp_bytes[2] += agg_window.iloc[i]['bytes']
+
+            with open("overlapped_tcp_window.csv", "a+") as file:
+                file.write("{},{},{},{}\n".format(self.window_index, "tcp",
+                                                  str(tmp_packets[0]), str(tmp_bytes[0])))
+            with open("overlapped_udp_window.csv", "a+") as file:
+                file.write("{},{},{},{}\n".format(self.window_index, "udp",
+                                                  str(tmp_packets[1]), str(tmp_bytes[1])))
+            with open("overlapped_agg_window.csv", "a+") as file:
+                file.write("{},{},{},{}\n".format(self.window_index, "agg",
+                                                  str(tmp_packets[2]), str(tmp_bytes[2])))
+
+
