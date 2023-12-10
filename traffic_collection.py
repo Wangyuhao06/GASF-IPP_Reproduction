@@ -56,15 +56,15 @@ class Controller(app_manager.RyuApp):
                         os.path.join(self.path, "collection_agg" + str(time.time()) + ".csv"))
 
         file0 = open("collection_tcp.csv", "w")
-        file0.write("index, type, packets, bytes\n")
+        file0.write("index,type,packets,bytes\n")
         file0.close()
 
         file0 = open("collection_udp.csv", "w")
-        file0.write("index, type, packets, bytes\n")
+        file0.write("index,type,packets,bytes\n")
         file0.close()
 
         file0 = open("collection_agg.csv", "w")
-        file0.write("index, type, packets, bytes\n")
+        file0.write("index,type,packets,bytes\n")
         file0.close()
 
         if os.path.exists("./overlapped_tcp_window.csv"):
@@ -78,15 +78,15 @@ class Controller(app_manager.RyuApp):
                         os.path.join(self.path, "overlapped_agg_window" + str(time.time()) + ".csv"))
 
         file = open("overlapped_tcp_window.csv", "w")
-        file.write("index, type, packets, bytes\n")
+        file.write("index,type,packets,bytes\n")
         file.close()
 
         file = open("overlapped_udp_window.csv", "w")
-        file.write("index, type, packets, bytes\n")
+        file.write("index,type,packets,bytes\n")
         file.close()
 
         file = open("overlapped_agg_window.csv", "w")
-        file.write("index, type, packets, bytes\n")
+        file.write("index,type,packets,bytes\n")
         file.close()
 
 

@@ -6,18 +6,18 @@ import math
 
 
 class GASF(object):
-    def __init__(self, traffic):
-        self.Gramian = []
-        self.traffic = traffic
+    def __init__(self):
         self.max = 1
         self.min = -1
 
-    def cal_gramian(self):
+    def cal_gramian(self, traffic):
+        Gramian = [[]]
         X_S = []
         Theta = []
-        Xmax = max(self.traffic)
-        Xmin = min(self.traffic)
-        for x in self.traffic:
+        Xmax = max(traffic)
+        Xmin = min(traffic)
+        for x in traffic:
+            # 将 x 缩放到(-1, 1)之间
             xi_s = ((x - Xmin) * (self.max - self.min) + self.min) / (Xmax - Xmin)
             X_S.append(xi_s)
         for xi_s in X_S:
@@ -28,26 +28,28 @@ class GASF(object):
             G_temp = []
             for j in Theta:
                 G_temp.append(math.cos(i+j))
+            Gramian.append(G_temp)
+        return Gramian  # 返回Gramian矩阵
 
-            self.Gramian.append(G_temp)
-        return self.Gramian  # 返回Gramian矩阵
-
-    def cal_three_moments(self):
-        rows = len(self.Gramian)     # 获取Gramian矩阵的行数
-        cols = len(self.Gramian[0])  # 获取Gramian矩阵的列数
+    def cal_three_moments(self, matrix):
+        rows = len(matrix)     # 获取Gramian矩阵的行数
+        cols = len(matrix[0])  # 获取Gramian矩阵的列数
         E, sigma, S = 0, 0, 0
         first_sum, second_sum, third_sum = 0, 0, 0
+        # Calculate first moment
         for i in range(rows):
             for j in range(cols):
-                first_sum += self.Gramian[i][j]
+                first_sum += matrix[i][j]
         E = first_sum / rows * cols
+        # Calculate second moment
         for i in range(rows):
             for j in range(cols):
-                second_sum += (self.Gramian[i][j] - E) ** 2
+                second_sum += (matrix[i][j] - E) ** 2
         sigma = math.sqrt(second_sum / rows * cols)
+        # Calculate third moment
         for i in range(rows):
             for j in range(cols):
-                third_sum += (self.Gramian[i][j] - E) ** 3
+                third_sum += (matrix[i][j] - E) ** 3
         S = math.pow(third_sum / rows * cols, 1 / 3)
         return E, sigma, S  # 返回三阶矩
 
