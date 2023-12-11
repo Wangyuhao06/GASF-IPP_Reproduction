@@ -14,8 +14,8 @@ model = xgb.XGBClassifier(max_depth=5, learning_rate=0.1, n_estimators=160, sile
 model.fit(X_train, y_train)
 
 feature_importance = model.feature_importances_
-weights = feature_importance/sum(feature_importance)
-score = np.dot(x,weights)
+weights = feature_importance/sum(feature_importance+1)
+score = np.dot(x,weights).reshape(-1,1)
 
 clf = KNeighborsClassifier(n_neighbors=5, weights='uniform', algorithm='auto', leaf_size=30, p=2, metric='minkowski', metric_params=None, n_jobs=None)
 clf.fit(score, y)
