@@ -54,3 +54,13 @@ class GASF(object):
         return E, sigma, S  # 返回三阶矩
 
     # TODO 计算三阶矩的XGBoost评分
+
+
+'''test'''
+if __name__ == '__main__':
+    GASF = GASF()
+    with open("overlapped_agg_window.csv", "r") as file:
+        content = file.read()
+
+
+
